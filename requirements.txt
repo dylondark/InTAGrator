@@ -1,4 +1,0 @@
-pyacoustid
-requests
-musicbrainzngs
-python-dotenv

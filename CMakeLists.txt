@@ -62,6 +62,21 @@ set_target_properties(InTAGrator PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+# Copy songInfo.py to the build output directory at configure time
+configure_file(
+    ${CMAKE_SOURCE_DIR}/python_files/songInfo.py
+    ${CMAKE_CURRENT_BINARY_DIR}/songInfo.py
+    COPYONLY
+)
+
+# Also copy next to the executable after each build (handles multi-config generators)
+add_custom_command(TARGET InTAGrator POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_SOURCE_DIR}/python_files/songInfo.py
+        $<TARGET_FILE_DIR:InTAGrator>/songInfo.py
+    COMMENT "Copying songInfo.py to output directory"
+)
+
 include(GNUInstallDirs)
 install(TARGETS InTAGrator
     BUNDLE DESTINATION .

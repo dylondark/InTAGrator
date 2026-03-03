@@ -100,7 +100,7 @@ def get_lastfm_artist_info(artist):
         print(f"Last.fm artist error: {e}")
         return {}
 
-def tag_file(filepath, verbose=False):
+def tag_file(filepath, verbose=False, use_musicbrainz=True, use_lastfm=True):
     if verbose:
         print(f"\nTagging: {filepath}")
         print("=" * 50)
@@ -117,20 +117,24 @@ def tag_file(filepath, verbose=False):
     metadata = {**match}
 
     # 2. MusicBrainz
-    if match["recording_id"]:
+    if use_musicbrainz and match["recording_id"]:
         mb = get_musicbrainz_metadata(match["recording_id"])
         metadata.update(mb)
         if verbose:
             print(f"MusicBrainz data fetched")
+    elif not use_musicbrainz and verbose:
+        print("MusicBrainz skipped")
 
     # 3. Last.fm track info
-    if match["artist"] and match["title"]:
+    if use_lastfm and match["artist"] and match["title"]:
         lfm = get_lastfm_metadata(match["artist"], match["title"])
         metadata.update(lfm)
         artist_info = get_lastfm_artist_info(match["artist"])
         metadata.update(artist_info)
         if verbose:
             print(f"Last.fm data fetched")
+    elif not use_lastfm and verbose:
+        print("Last.fm skipped")
 
     if verbose:
         # --- Print all collected metadata ---
@@ -158,5 +162,23 @@ if __name__ == "__main__":
         action="store_true",
         help="Print all metadata to the console instead of writing a JSON file"
     )
+
+    source_group = parser.add_argument_group("sources")
+    source_group.add_argument(
+        "--no-musicbrainz",
+        action="store_true",
+        help="Disable MusicBrainz lookups"
+    )
+    source_group.add_argument(
+        "--no-lastfm",
+        action="store_true",
+        help="Disable Last.fm lookups"
+    )
+
     args = parser.parse_args()
-    tag_file(args.filename, verbose=args.verbose)
+    tag_file(
+        args.filename,
+        verbose=args.verbose,
+        use_musicbrainz=not args.no_musicbrainz,
+        use_lastfm=not args.no_lastfm,
+    )

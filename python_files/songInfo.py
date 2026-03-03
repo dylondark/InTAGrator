@@ -100,24 +100,28 @@ def get_lastfm_artist_info(artist):
         print(f"Last.fm artist error: {e}")
         return {}
 
-def tag_file(filepath):
-    print(f"\nTagging: {filepath}")
-    print("=" * 50)
+def tag_file(filepath, verbose=False):
+    if verbose:
+        print(f"\nTagging: {filepath}")
+        print("=" * 50)
 
     # 1. AcoustID fingerprint
     match = get_acoustid_match(filepath)
     if not match:
-        print("No AcoustID match found.")
+        if verbose:
+            print("No AcoustID match found.")
         return
 
-    print(f"AcoustID match (score: {match['score']:.0%})")
+    if verbose:
+        print(f"AcoustID match (score: {match['score']:.0%})")
     metadata = {**match}
 
     # 2. MusicBrainz
     if match["recording_id"]:
         mb = get_musicbrainz_metadata(match["recording_id"])
         metadata.update(mb)
-        print(f"MusicBrainz data fetched")
+        if verbose:
+            print(f"MusicBrainz data fetched")
 
     # 3. Last.fm track info
     if match["artist"] and match["title"]:
@@ -125,20 +129,34 @@ def tag_file(filepath):
         metadata.update(lfm)
         artist_info = get_lastfm_artist_info(match["artist"])
         metadata.update(artist_info)
-        print(f"Last.fm data fetched")
+        if verbose:
+            print(f"Last.fm data fetched")
 
-    # --- Print all collected metadata ---
-    print("\n Full Metadata:")
-    for key, value in metadata.items():
-        if value:
-            print(f"  {key:25s}: {value}")
+    if verbose:
+        # --- Print all collected metadata ---
+        print("\n Full Metadata:")
+        for key, value in metadata.items():
+            if value:
+                print(f"  {key:25s}: {value}")
+    else:
+        # --- Write metadata to JSON file ---
+        import json
+        base = os.path.splitext(os.path.basename(filepath))[0]
+        out_path = f"{base}_metadata.json"
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2, ensure_ascii=False)
+        print(out_path)
 
     return metadata
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python songInfo.py <filename>")
-        sys.exit(1) # Exit if no filename is provided
-    
-    filename = sys.argv[1]
-    tag_file(filename)
+    import argparse
+    parser = argparse.ArgumentParser(description="Fetch metadata for a song file.")
+    parser.add_argument("filename", help="Path to the audio file")
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Print all metadata to the console instead of writing a JSON file"
+    )
+    args = parser.parse_args()
+    tag_file(args.filename, verbose=args.verbose)

@@ -116,9 +116,9 @@
      <property name="geometry">
       <rect>
        <x>370</x>
-       <y>40</y>
-       <width>151</width>
-       <height>141</height>
+       <y>60</y>
+       <width>91</width>
+       <height>91</height>
       </rect>
      </property>
      <property name="frameShape">
@@ -137,7 +137,7 @@
     <widget class="QPushButton" name="artBrowseButton">
      <property name="geometry">
       <rect>
-       <x>530</x>
+       <x>370</x>
        <y>160</y>
        <width>80</width>
        <height>24</height>
@@ -178,6 +178,77 @@
      <row/>
      <row/>
      <column/>
+    </widget>
+    <widget class="QLabel" name="label_2">
+     <property name="geometry">
+      <rect>
+       <x>370</x>
+       <y>30</y>
+       <width>61</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Cover Art</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="acoustIDCheckBox">
+     <property name="geometry">
+      <rect>
+       <x>490</x>
+       <y>50</y>
+       <width>76</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>AcoustID</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="lastFMCheckBox">
+     <property name="geometry">
+      <rect>
+       <x>490</x>
+       <y>70</y>
+       <width>76</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Last.FM</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_3">
+     <property name="geometry">
+      <rect>
+       <x>490</x>
+       <y>30</y>
+       <width>61</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Sources</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="grabButton">
+     <property name="geometry">
+      <rect>
+       <x>490</x>
+       <y>160</y>
+       <width>80</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Grab</string>
+     </property>
     </widget>
    </widget>
    <widget class="QGroupBox" name="outputGroupBox">

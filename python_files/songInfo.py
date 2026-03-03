@@ -1,3 +1,5 @@
+import sys
+
 import acoustid
 import requests
 import musicbrainzngs
@@ -134,4 +136,9 @@ def tag_file(filepath):
     return metadata
 
 if __name__ == "__main__":
-    tag_file("NEWWWWWWSONGGGG.mp3")
+    if len(sys.argv) < 2:
+        print("Usage: python songInfo.py <filename>")
+        sys.exit(1) # Exit if no filename is provided
+    
+    filename = sys.argv[1]
+    tag_file(filename)

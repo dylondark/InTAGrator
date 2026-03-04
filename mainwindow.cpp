@@ -12,6 +12,10 @@
 #include <taglib/id3v2tag.h>
 #include <taglib/attachedpictureframe.h>
 #include <QProcess>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -280,12 +284,79 @@ void MainWindow::on_grabButton_clicked()
     process.start("python3", args);
     process.waitForFinished();
 
-    QString output = process.readAllStandardOutput();
     QString errors = process.readAllStandardError();
-
-    qDebug() << "Output:\n" << output;
-    if (!errors.isEmpty()) {
+    if (!errors.isEmpty())
         qDebug() << "Errors:\n" << errors;
+
+    // Build JSON path: <exe dir>/<input filename without extension>_metadata.json
+    QString baseName = QFileInfo(inputFile).completeBaseName();
+    QString exeDir   = QCoreApplication::applicationDirPath();
+    QString jsonPath = exeDir + "/" + baseName + "_metadata.json";
+
+    QFile jsonFile(jsonPath);
+    if (!jsonFile.open(QIODevice::ReadOnly)) {
+        qDebug() << "Failed to open JSON file:" << jsonPath;
+        return;
     }
+
+    QJsonDocument doc = QJsonDocument::fromJson(jsonFile.readAll());
+    jsonFile.close();
+
+    if (!doc.isObject()) {
+        qDebug() << "Invalid JSON";
+        QFile::remove(jsonPath);
+        return;
+    }
+
+    QJsonObject obj = doc.object();
+
+    // AcoustID
+    double score           = obj["score"].toDouble();
+    QString recording_id   = obj["recording_id"].toString();
+    QString title          = obj["title"].toString();
+    QString artist         = obj["artist"].toString();
+
+    // MusicBrainz
+    QString mb_title       = obj["mb_title"].toString();
+    QString mb_length_ms   = obj["mb_length_ms"].toString();
+    QString album          = obj["album"].toString();
+    QString release_date   = obj["release_date"].toString();
+    QString track_number   = obj["track_number"].toString();
+    QString label          = obj["label"].toString();
+
+    auto toStringList = [&](const QString &key) {
+        QStringList list;
+        for (const QJsonValue &v : obj[key].toArray())
+            list << v.toString();
+        return list;
+    };
+
+    QStringList mb_tags     = toStringList("mb_tags");
+    QStringList mb_genres   = toStringList("mb_genres");
+
+    // Last.fm track
+    QString lastfm_listeners = obj["lastfm_listeners"].toString();
+    QString lastfm_playcount = obj["lastfm_playcount"].toString();
+    QStringList lastfm_tags  = toStringList("lastfm_tags");
+    QString lastfm_summary   = obj["lastfm_summary"].toString();
+    QString duration_ms      = obj["duration_ms"].toString();
+
+    // Last.fm artist
+    QString artist_bio          = obj["artist_bio"].toString();
+    QString artist_listeners    = obj["artist_listeners"].toString();
+    QStringList artist_tags     = toStringList("artist_tags");
+    QStringList similar_artists = toStringList("similar_artists");
+
+    ui->metadataTable->setItem(0, 0, new QTableWidgetItem(title));
+    ui->metadataTable->setItem(1, 0, new QTableWidgetItem(artist));
+    ui->metadataTable->setItem(2, 0, new QTableWidgetItem(album));
+    ui->metadataTable->setItem(3, 0, new QTableWidgetItem(mb_genres.join(", ")));
+    ui->metadataTable->setItem(4, 0, new QTableWidgetItem(track_number));
+    ui->metadataTable->setItem(5, 0, new QTableWidgetItem(release_date));
+
+    // Clean up the temp JSON file
+    QFile::remove(jsonPath);
+
+    qDebug() << title << "by" << artist << "| score:" << score;
 }
 

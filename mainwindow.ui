@@ -192,17 +192,17 @@
       <string>Cover Art</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="acoustIDCheckBox">
+    <widget class="QCheckBox" name="musicBrainzCheckBox">
      <property name="geometry">
       <rect>
        <x>490</x>
        <y>50</y>
-       <width>76</width>
+       <width>101</width>
        <height>21</height>
       </rect>
      </property>
      <property name="text">
-      <string>AcoustID</string>
+      <string>MusicBrainz</string>
      </property>
      <property name="checked">
       <bool>true</bool>

@@ -11,6 +11,7 @@
 #include <taglib/mpegfile.h>
 #include <taglib/id3v2tag.h>
 #include <taglib/attachedpictureframe.h>
+#include <QProcess>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -259,5 +260,32 @@ void MainWindow::on_artBrowseButton_clicked()
 void MainWindow::on_closeButton_clicked()
 {
     close();
+}
+
+
+void MainWindow::on_grabButton_clicked()
+{
+    QString inputFile = ui->fileInPathBox->text().trimmed().remove("\n");
+    if (inputFile.isEmpty())
+        return;
+
+    QStringList args;
+    args << "songInfo.py" << inputFile;
+    if (!ui->lastFMCheckBox->isChecked())
+        args << "--no-lastfm";
+    if (!ui->musicBrainzCheckBox->isChecked())
+        args << "--no-musicbrainz";
+
+    QProcess process;
+    process.start("python3", args);
+    process.waitForFinished();
+
+    QString output = process.readAllStandardOutput();
+    QString errors = process.readAllStandardError();
+
+    qDebug() << "Output:\n" << output;
+    if (!errors.isEmpty()) {
+        qDebug() << "Errors:\n" << errors;
+    }
 }
 

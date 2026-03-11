@@ -6,6 +6,8 @@ import re
 import os
 import argparse
 import json
+
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 # --- CONFIG ---
@@ -196,7 +198,6 @@ def get_genius_data(artist, title):
     try:
         headers = {"Authorization": f"Bearer {GENIUS_API_KEY}"}
 
-        # Search for the song
         r = requests.get(
             "https://api.genius.com/search",
             params={"q": f"{artist} {title}"},
@@ -205,7 +206,6 @@ def get_genius_data(artist, title):
 
         hits = r.get("response", {}).get("hits", [])
         if not hits:
-            # Fallback: title only
             r2 = requests.get(
                 "https://api.genius.com/search",
                 params={"q": title},
@@ -259,6 +259,44 @@ def get_genius_data(artist, title):
     except Exception as e:
         print(f"Genius error: {e}")
         return {}
+    
+def get_genius_lyrics(genius_url):
+    """Scrape lyrics from a Genius song page."""
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/120.0.0.0 Safari/537.36"
+        }
+        r = requests.get(genius_url, headers=headers, timeout=10)
+        r.raise_for_status()
+
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        containers = soup.find_all("div", attrs={"data-lyrics-container": "true"})
+        if not containers:
+            return None
+
+        lyrics_parts = []
+        for container in containers:
+            # Replace <br> tags with newlines before extracting text
+            for br in container.find_all("br"):
+                br.replace_with("\n")
+            # Strip annotation links but keep their text
+            for a in container.find_all("a"):
+                a.unwrap()
+            lyrics_parts.append(container.get_text())
+
+        lyrics = "\n".join(lyrics_parts).strip()
+
+        if lyrics:
+            return {'lyrics': lyrics}
+        else:
+            return None
+
+    except Exception as e:
+        print(f"Lyrics scrape error: {e}")
+        return None
 
 def fetch_metadata(filepath):
     print(f"\nTagging: {filepath}")
@@ -299,6 +337,13 @@ def fetch_metadata(filepath):
         genius = get_genius_data(match["artist"], match["title"])
         metadata.update(genius)
         print("Genius data fetched")
+
+    # 6. Genius lyrics
+    if metadata.get("genius_url"):
+        lyrics_data = get_genius_lyrics(metadata["genius_url"])
+        if lyrics_data:
+            metadata.update(lyrics_data)
+            print("Lyrics scraped from Genius")
 
     return metadata
 

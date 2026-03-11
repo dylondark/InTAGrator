@@ -298,6 +298,30 @@ def get_genius_lyrics(genius_url):
         print(f"Lyrics scrape error: {e}")
         return None
 
+def get_cover_art(release_id):
+    """Fetch cover art from Cover Art Archive using MB release_id."""
+    try:
+        url = f"https://coverartarchive.org/release/{release_id}"
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+        
+        images = data.get("images", [])
+        front = next((img for img in images if img.get("front")), images[0] if images else None)
+        
+        if not front:
+            return {}
+            
+        return {
+            "cover_art_url":       front.get("image"),          # full resolution
+            "cover_art_thumb_250": front.get("thumbnails", {}).get("250"),
+            "cover_art_thumb_500": front.get("thumbnails", {}).get("500"),
+            "cover_art_approved":  front.get("approved"),
+        }
+    except Exception as e:
+        print(f"Cover art error: {e}")
+        return {}
+
 def fetch_metadata(filepath):
     print(f"\nTagging: {filepath}")
     print("=" * 50)
@@ -344,6 +368,13 @@ def fetch_metadata(filepath):
         if lyrics_data:
             metadata.update(lyrics_data)
             print("Lyrics scraped from Genius")
+
+    cover = {}
+    if metadata.get("release_id"):
+        cover = get_cover_art(metadata["release_id"])
+        print("Cover art data fetched")
+        
+    metadata.update(cover)
 
     return metadata
 

@@ -356,7 +356,7 @@ void MainWindow::on_grabButton_clicked()
     ui->metadataTable->setItem(0, 0, new QTableWidgetItem(title));
     ui->metadataTable->setItem(1, 0, new QTableWidgetItem(artist));
     ui->metadataTable->setItem(2, 0, new QTableWidgetItem(album));
-    ui->metadataTable->setItem(3, 0, new QTableWidgetItem(mb_genres.join(", ")));
+    ui->metadataTable->setItem(3, 0, new QTableWidgetItem(artist_tags[0]));
     ui->metadataTable->setItem(4, 0, new QTableWidgetItem(track_number));
     ui->metadataTable->setItem(5, 0, new QTableWidgetItem(release_date));
 

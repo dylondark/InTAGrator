@@ -279,6 +279,12 @@ void MainWindow::on_grabButton_clicked()
         args << "--no-lastfm";
     if (!ui->musicBrainzCheckBox->isChecked())
         args << "--no-musicbrainz";
+    if (!ui->geniusCheckBox->isChecked())
+        args << "--no-genius";
+    if (!ui->lyricsCheckBox->isChecked())
+        args << "--no-lyrics";
+    if (!ui->coverArtCheckBox->isChecked())
+        args << "--no-coverart";
 
     QProcess process;
     process.start("python3", args);

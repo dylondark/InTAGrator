@@ -289,7 +289,7 @@ void MainWindow::on_grabButton_clicked()
         qDebug() << "Errors:\n" << errors;
 
     // Build JSON path: <exe dir>/<input filename without extension>_metadata.json
-    QString baseName = QFileInfo(inputFile).completeBaseName();
+    QString baseName = QFileInfo(inputFile).fileName();
     QString exeDir   = QCoreApplication::applicationDirPath();
     QString jsonPath = exeDir + "/" + baseName + "_metadata.json";
 

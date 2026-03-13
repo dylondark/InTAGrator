@@ -40,26 +40,26 @@ def get_musicbrainz_metadata(recording_id):
             "mb_title":     rec.get("title"),
             "mb_length_ms": rec.get("length"),
             "mb_tags":      [t["name"] for t in rec.get("tag-list", [])],
-        
+
             "mb_genres":       [g["name"] for g in rec.get("genre-list", [])],
             "mb_isrcs":        rec.get("isrc-list", []),          # e.g. ["USUM71703861"]
             "mb_rating":       rec.get("rating", {}).get("value"),
             "mb_disambiguation": rec.get("disambiguation"),       # e.g. "live version"
             "mb_aliases":      [a["alias"] for a in rec.get("alias-list", [])],
-        
+
             "mb_artist_credit": " ".join([
                 ac.get("name") or ac.get("artist", {}).get("name", "")
                 for ac in rec.get("artist-credit", [])
                 if isinstance(ac, dict)
             ]),
-        
+
             "mb_isrc_list": rec.get("isrc-list", []),
-        
+
             "mb_urls": [
                 {"type": r.get("type"), "url": r.get("url", {}).get("resource")}
                 for r in rec.get("url-relation-list", [])
             ],
-        
+
             "mb_work_id": next((
                 r.get("work", {}).get("id")
                 for r in rec.get("work-relation-list", [])
@@ -68,7 +68,7 @@ def get_musicbrainz_metadata(recording_id):
         }
 
         releases = rec.get("release-list", [])
-        
+
         if releases:
             release = releases[0]
             rg = release.get("release-group", {})
@@ -80,23 +80,23 @@ def get_musicbrainz_metadata(recording_id):
                 "release_date": release.get("date"),
                 "track_number": track.get("number"),
                 "label":        release.get("label-info-list", [{}])[0].get("label", {}).get("name"),
-                "release_id":       release.get("id"),            
-                "release_country":  release.get("country"),       
-                "release_status":   release.get("status"),        
+                "release_id":       release.get("id"),
+                "release_country":  release.get("country"),
+                "release_status":   release.get("status"),
                 "release_barcode":  release.get("barcode"),
                 "total_tracks":     medium.get("track-count"),
                 "disc_number":      medium.get("position"),
-                "media_format":     medium.get("format"),         
+                "media_format":     medium.get("format"),
                 "catalog_number":   release.get("label-info-list", [{}])[0].get("catalog-number"),
                 "release_group_id":   rg.get("id"),
-                "release_group_type": rg.get("type"),             
+                "release_group_type": rg.get("type"),
                 "release_group_secondary_types": [
-                    t for t in rg.get("secondary-type-list", [])  
+                    t for t in rg.get("secondary-type-list", [])
                 ],
             })
 
         return metadata
-    
+
     except Exception as e:
         print(f"MusicBrainz recording error: {e}")
         return {}
@@ -259,7 +259,7 @@ def get_genius_data(artist, title):
     except Exception as e:
         print(f"Genius error: {e}")
         return {}
-    
+
 def get_genius_lyrics(genius_url):
     """Scrape lyrics from a Genius song page."""
     try:
@@ -305,13 +305,13 @@ def get_cover_art(release_id):
         r = requests.get(url, timeout=10)
         r.raise_for_status()
         data = r.json()
-        
+
         images = data.get("images", [])
         front = next((img for img in images if img.get("front")), images[0] if images else None)
-        
+
         if not front:
             return {}
-            
+
         return {
             "cover_art_url":       front.get("image"),          # full resolution
             "cover_art_thumb_250": front.get("thumbnails", {}).get("250"),
@@ -322,11 +322,20 @@ def get_cover_art(release_id):
         print(f"Cover art error: {e}")
         return {}
 
-def fetch_metadata(filepath):
+def fetch_metadata(filepath, disable=None):
+    """
+    Fetch metadata for an audio file.
+
+    disable: a set of source names to skip. Valid values:
+        "musicbrainz", "lastfm", "genius", "lyrics", "coverart"
+    """
+    if disable is None:
+        disable = set()
+
     print(f"\nTagging: {filepath}")
     print("=" * 50)
 
-    # 1. AcoustID fingerprint
+    # 1. AcoustID fingerprint (always runs — required for everything else)
     match = get_acoustid_match(filepath)
     if not match:
         print("No AcoustID match found.")
@@ -337,57 +346,99 @@ def fetch_metadata(filepath):
     metadata = {**match}
 
     # 2. MusicBrainz recording
-    if match["recording_id"]:
+    if "musicbrainz" not in disable and match["recording_id"]:
         mb = get_musicbrainz_metadata(match["recording_id"])
         metadata.update(mb)
         print("MusicBrainz recording data fetched")
+    elif "musicbrainz" in disable:
+        print("MusicBrainz skipped")
 
     # 3. MusicBrainz artist detail
-    if match["artist"]:
+    if "musicbrainz" not in disable and match["artist"]:
         mb_artist = get_musicbrainz_artist_detail(match["artist"])
         metadata.update(mb_artist)
         print("MusicBrainz artist detail fetched")
 
-    # 4. Last.fm track
-    if match["artist"] and match["title"]:
+    # 4. Last.fm track + artist
+    if "lastfm" not in disable and match["artist"] and match["title"]:
         lfm = get_lastfm_metadata(match["artist"], match["title"])
         metadata.update(lfm)
         artist_info = get_lastfm_artist_info(match["artist"])
         metadata.update(artist_info)
         print("Last.fm data fetched")
+    elif "lastfm" in disable:
+        print("Last.fm skipped")
 
-    # 5. Genius
-    if match["artist"] and match["title"]:
+    # 5. Genius song metadata
+    if "genius" not in disable and match["artist"] and match["title"]:
         genius = get_genius_data(match["artist"], match["title"])
         metadata.update(genius)
         print("Genius data fetched")
+    elif "genius" in disable:
+        print("Genius skipped")
 
-    # 6. Genius lyrics
-    if metadata.get("genius_url"):
+    # 6. Genius lyrics (depends on Genius having run successfully)
+    if "lyrics" not in disable and metadata.get("genius_url"):
         lyrics_data = get_genius_lyrics(metadata["genius_url"])
         if lyrics_data:
             metadata.update(lyrics_data)
             print("Lyrics scraped from Genius")
+    elif "lyrics" in disable:
+        print("Lyrics skipped")
 
-    cover = {}
-    if metadata.get("release_id"):
+    # 7. Cover art
+    if "coverart" not in disable and metadata.get("release_id"):
         cover = get_cover_art(metadata["release_id"])
+        metadata.update(cover)
         print("Cover art data fetched")
-        
-    metadata.update(cover)
+    elif "coverart" in disable:
+        print("Cover art skipped")
 
     return metadata
 
 if __name__ == "__main__":
-    if (len(sys.argv) < 2):
-        print("Usage: python songInfo.py <audio_file>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description="Fetch metadata for an audio file from multiple sources."
+    )
+    parser.add_argument(
+        "filepath",
+        help="Path to the audio file to identify and tag"
+    )
+    parser.add_argument(
+        "--no-musicbrainz", action="store_true",
+        help="Skip MusicBrainz (recording info, artist details)"
+    )
+    parser.add_argument(
+        "--no-lastfm", action="store_true",
+        help="Skip Last.fm (tags, listener stats, artist bio)"
+    )
+    parser.add_argument(
+        "--no-genius", action="store_true",
+        help="Skip Genius (song description, writers, producers, pageviews)"
+    )
+    parser.add_argument(
+        "--no-lyrics", action="store_true",
+        help="Skip scraping lyrics from Genius"
+    )
+    parser.add_argument(
+        "--no-coverart", action="store_true",
+        help="Skip fetching cover art from Cover Art Archive"
+    )
 
-    filename = sys.argv[1]
+    args = parser.parse_args()
 
-    metadata = fetch_metadata(filename)
+    disable = set()
+    if args.no_musicbrainz: disable.add("musicbrainz")
+    if args.no_lastfm:      disable.add("lastfm")
+    if args.no_genius:      disable.add("genius")
+    if args.no_lyrics:      disable.add("lyrics")
+    if args.no_coverart:    disable.add("coverart")
 
-    out_path = f"{filename}_metadata.json"
+    metadata = fetch_metadata(args.filepath, disable=disable)
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    base_name = os.path.basename(args.filepath)
+    out_path = os.path.join(script_dir, f"{base_name}_metadata.json")
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, ensure_ascii=False)
     print(out_path)

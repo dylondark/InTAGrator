@@ -6,6 +6,9 @@
 #include <taglib/mpegfile.h>
 #include <taglib/id3v2tag.h>
 #include <taglib/attachedpictureframe.h>
+#include <QEventLoop>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
 QPixmap getCoverArtUtility(const QString& filePath)
 {
@@ -30,6 +33,26 @@ QPixmap getCoverArtUtility(const QString& filePath)
         data.size()
         );
 
+    return pixmap;
+}
+
+QPixmap loadPixmapFromUrl(const QUrl &url)
+{
+    QNetworkAccessManager nam;
+    QEventLoop loop;
+    QPixmap pixmap;
+
+    QNetworkReply *reply = nam.get(QNetworkRequest(url));
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec(); // blocks until reply finishes
+
+    if (reply->error() == QNetworkReply::NoError) {
+        pixmap.loadFromData(reply->readAll());
+    } else {
+        qWarning() << "Failed to load image:" << reply->errorString();
+    }
+
+    reply->deleteLater();
     return pixmap;
 }
 

@@ -360,9 +360,17 @@ void MainWindow::on_grabButton_clicked()
     ui->metadataTable->setItem(4, 0, new QTableWidgetItem(track_number));
     ui->metadataTable->setItem(5, 0, new QTableWidgetItem(release_date));
 
+    QPixmap pixmap = loadPixmapFromUrl(obj["cover_art_url"].toString());
+    ui->coverArt->setPixmap(
+        pixmap.scaled(
+            ui->coverArt->size(),
+            Qt::KeepAspectRatio,
+            Qt::SmoothTransformation
+            )
+        );
+
     // Clean up the temp JSON file
     QFile::remove(jsonPath);
 
     qDebug() << title << "by" << artist << "| score:" << score;
 }
-

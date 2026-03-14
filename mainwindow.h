@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QDragEnterEvent>
 #include <QDropEvent>
+#include <QProcess>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -30,8 +31,11 @@ private slots:
     void on_fileOutBrowseButton_clicked();
     void on_artBrowseButton_clicked();
     void on_grabButton_clicked();
+    void onPythonProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
 private:
     Ui::MainWindow *ui;
+    QProcess m_pythonProcess;
+    QString m_lastGrabInputFile;
 };
 #endif // MAINWINDOW_H

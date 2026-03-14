@@ -26,6 +26,19 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->metadataTable->setHorizontalHeaderLabels({"Value"});
     ui->metadataTable->setVerticalHeaderLabels({"Title", "Artist", "Album", "Genre", "Track", "Year"});
+
+    connect(&m_pythonProcess, &QProcess::readyReadStandardOutput, this, [this]() {
+        ui->scriptLog->appendPlainText(QString::fromLocal8Bit(m_pythonProcess.readAllStandardOutput()));
+    });
+
+    connect(&m_pythonProcess, &QProcess::readyReadStandardError, this, [this]() {
+        ui->scriptLog->appendPlainText(QString::fromLocal8Bit(m_pythonProcess.readAllStandardError()));
+    });
+
+    connect(&m_pythonProcess,
+            QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this,
+            &MainWindow::onPythonProcessFinished);
 }
 
 MainWindow::~MainWindow()
@@ -267,6 +280,14 @@ void MainWindow::on_grabButton_clicked()
     if (inputFile.isEmpty())
         return;
 
+    if (m_pythonProcess.state() != QProcess::NotRunning) {
+        ui->scriptLog->appendPlainText(" A previous grab is still running. Please wait...");
+        return;
+    }
+
+    m_lastGrabInputFile = inputFile;
+    ui->scriptLog->clear();
+
     QStringList args;
     args << "songInfo.py" << inputFile;
     if (!ui->lastFMCheckBox->isChecked())
@@ -280,22 +301,38 @@ void MainWindow::on_grabButton_clicked()
     if (!ui->coverArtCheckBox->isChecked())
         args << "--no-coverart";
 
-    QProcess process;
-    process.start("python3", args);
-    process.waitForFinished();
+    m_pythonProcess.start("python3", args);
+    if (!m_pythonProcess.waitForStarted(3000)) {
+        ui->scriptLog->appendPlainText("Failed to start python3 process");
+    }
+}
 
-    QString errors = process.readAllStandardError();
-    if (!errors.isEmpty())
-        qDebug() << "Errors:\n" << errors;
+void MainWindow::onPythonProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    // Capture any remaining output from the process
+    QString stdoutText = QString::fromLocal8Bit(m_pythonProcess.readAllStandardOutput());
+    if (!stdoutText.isEmpty())
+        ui->scriptLog->appendPlainText(stdoutText);
 
-    // Build JSON path: <exe dir>/<input filename without extension>_metadata.json
+    QString stderrText = QString::fromLocal8Bit(m_pythonProcess.readAllStandardError());
+    if (!stderrText.isEmpty())
+        ui->scriptLog->appendPlainText(stderrText);
+
+    ui->scriptLog->appendPlainText(QStringLiteral("\nPython process finished (code %1, status %2)")
+                                  .arg(exitCode)
+                                  .arg(exitStatus == QProcess::NormalExit ? QStringLiteral("Normal") : QStringLiteral("Crash")));
+
+    QString inputFile = m_lastGrabInputFile;
+    if (inputFile.isEmpty())
+        return;
+
     QString baseName = QFileInfo(inputFile).fileName();
     QString exeDir   = QCoreApplication::applicationDirPath();
     QString jsonPath = exeDir + "/" + baseName + "_metadata.json";
 
     QFile jsonFile(jsonPath);
     if (!jsonFile.open(QIODevice::ReadOnly)) {
-        qDebug() << "Failed to open JSON file:" << jsonPath;
+        ui->scriptLog->appendPlainText("Failed to open JSON file: " + jsonPath);
         return;
     }
 
@@ -303,7 +340,7 @@ void MainWindow::on_grabButton_clicked()
     jsonFile.close();
 
     if (!doc.isObject()) {
-        qDebug() << "Invalid JSON";
+        ui->scriptLog->appendPlainText("Invalid JSON");
         QFile::remove(jsonPath);
         return;
     }
@@ -366,5 +403,5 @@ void MainWindow::on_grabButton_clicked()
     // Clean up the temp JSON file
     QFile::remove(jsonPath);
 
-    qDebug() << title << "by" << artist << "| score:" << score;
+    ui->scriptLog->appendPlainText(QStringLiteral("%1 by %2 | score: %3").arg(title, artist).arg(score));
 }

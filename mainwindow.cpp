@@ -24,8 +24,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setAcceptDrops(true);
 
-    ui->metadataTable->setHorizontalHeaderLabels({"Value"});
-    ui->metadataTable->setVerticalHeaderLabels({"Title", "Artist", "Album", "Genre", "Track", "Year"});
+    ui->metadataTable->setHorizontalHeaderLabels({"Tag", "Musicbrainz", "Last.fm", "Genius"});
+    ui->metadataTable->setVerticalHeaderLabels({"Title", "Artist", "Album", "Release Date", "Genre", "Release Country", "Release Status", "MusicBrainz Track ID", "MusicBrainz Album ID", "Barcode", "ISRC", "Similar Artists", "Founding Date"});
 
     connect(&m_pythonProcess, &QProcess::readyReadStandardOutput, this, [this]() {
         ui->scriptLog->appendPlainText(QString::fromLocal8Bit(m_pythonProcess.readAllStandardOutput()));

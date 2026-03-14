@@ -166,16 +166,16 @@
       <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustIgnored</enum>
      </property>
      <property name="rowCount">
-      <number>6</number>
+      <number>13</number>
      </property>
      <property name="columnCount">
-      <number>5</number>
+      <number>4</number>
      </property>
      <attribute name="horizontalHeaderCascadingSectionResizes">
       <bool>false</bool>
      </attribute>
      <attribute name="horizontalHeaderDefaultSectionSize">
-      <number>150</number>
+      <number>170</number>
      </attribute>
      <attribute name="horizontalHeaderStretchLastSection">
       <bool>false</bool>
@@ -186,7 +186,13 @@
      <row/>
      <row/>
      <row/>
-     <column/>
+     <row/>
+     <row/>
+     <row/>
+     <row/>
+     <row/>
+     <row/>
+     <row/>
      <column/>
      <column/>
      <column/>

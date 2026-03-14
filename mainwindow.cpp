@@ -90,6 +90,10 @@ void MainWindow::on_loadFileButton_clicked()
     if (fileName.isEmpty())
         return;
 
+    ui->metadataTable->clearContents();
+    ui->coverArt->clear();
+    ui->coverArt->setPixmap(QPixmap(":/resources/defaultalbum.png"));
+
     TagLib::FileRef f(fileName.toUtf8().constData());
 
     QPixmap cover = getCoverArtUtility(fileName);
@@ -285,6 +289,10 @@ void MainWindow::on_grabButton_clicked()
         return;
     }
 
+    ui->metadataTable->clearContents();
+    ui->coverArt->clear();
+    ui->coverArt->setPixmap(QPixmap(":/resources/defaultalbum.png"));
+
     m_lastGrabInputFile = inputFile;
     ui->scriptLog->clear();
 
@@ -468,5 +476,13 @@ void MainWindow::on_keepButton_clicked()
             }
         }
     }
+}
+
+
+void MainWindow::on_clearButton_clicked()
+{
+    ui->metadataTable->clearContents();
+    ui->coverArt->clear();
+    ui->coverArt->setPixmap(QPixmap(":/resources/defaultalbum.png"));
 }
 

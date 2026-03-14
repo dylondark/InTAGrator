@@ -91,7 +91,7 @@ void MainWindow::on_loadFileButton_clicked()
             );
     } else {
         ui->coverArt->clear();
-        ui->coverArt->setText("No cover art");
+        ui->coverArt->setPixmap(QPixmap(":/resources/defaultalbum.png"));
     }
 
     if (!f.isNull() && f.tag()) {

@@ -29,7 +29,6 @@ private slots:
     void on_tagButton_clicked();
     void on_fileOutBrowseButton_clicked();
     void on_artBrowseButton_clicked();
-    void on_closeButton_clicked();
     void on_grabButton_clicked();
 
 private:

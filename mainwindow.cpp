@@ -261,12 +261,6 @@ void MainWindow::on_artBrowseButton_clicked()
     }
 }
 
-void MainWindow::on_closeButton_clicked()
-{
-    close();
-}
-
-
 void MainWindow::on_grabButton_clicked()
 {
     QString inputFile = ui->fileInPathBox->text().trimmed().remove("\n");

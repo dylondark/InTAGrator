@@ -301,14 +301,18 @@ void MainWindow::on_grabButton_clicked()
     if (!ui->coverArtCheckBox->isChecked())
         args << "--no-coverart";
 
+    ui->progressBar->setEnabled(true);
     m_pythonProcess.start("python3", args);
     if (!m_pythonProcess.waitForStarted(3000)) {
+        ui->progressBar->setEnabled(false);
         ui->scriptLog->appendPlainText("Failed to start python3 process");
     }
 }
 
 void MainWindow::onPythonProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
+    ui->progressBar->setEnabled(false);
+
     // Capture any remaining output from the process
     QString stdoutText = QString::fromLocal8Bit(m_pythonProcess.readAllStandardOutput());
     if (!stdoutText.isEmpty())

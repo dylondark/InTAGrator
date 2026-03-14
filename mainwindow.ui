@@ -461,6 +461,19 @@
       <number>-1</number>
      </property>
     </widget>
+    <widget class="QCheckBox" name="keepOutputCheckBox">
+     <property name="geometry">
+      <rect>
+       <x>150</x>
+       <y>30</y>
+       <width>121</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Keep Output File</string>
+     </property>
+    </widget>
    </widget>
   </widget>
  </widget>

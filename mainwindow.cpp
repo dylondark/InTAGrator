@@ -405,7 +405,8 @@ void MainWindow::onPythonProcessFinished(int exitCode, QProcess::ExitStatus exit
         );
 
     // Clean up the temp JSON file
-    QFile::remove(jsonPath);
+    if (!ui->keepOutputCheckBox->isChecked())
+        QFile::remove(jsonPath);
 
     ui->scriptLog->appendPlainText(QStringLiteral("%1 by %2 | score: %3").arg(title, artist).arg(score));
 }

@@ -388,12 +388,55 @@ void MainWindow::onPythonProcessFinished(int exitCode, QProcess::ExitStatus exit
     QStringList artist_tags     = toStringList("artist_tags");
     QStringList similar_artists = toStringList("similar_artists");
 
-    ui->metadataTable->setItem(0, 0, new QTableWidgetItem(title));
-    ui->metadataTable->setItem(1, 0, new QTableWidgetItem(artist));
-    ui->metadataTable->setItem(2, 0, new QTableWidgetItem(album));
-    ui->metadataTable->setItem(3, 0, new QTableWidgetItem(artist_tags[0]));
-    ui->metadataTable->setItem(4, 0, new QTableWidgetItem(track_number));
-    ui->metadataTable->setItem(5, 0, new QTableWidgetItem(release_date));
+    // Helper to convert arrays to comma-separated strings
+    auto arrayToString = [&](const QString &key) -> QString {
+        QStringList items = toStringList(key);
+        return items.join(", ");
+    };
+
+    // Populate table rows based on row headers
+    // Row 0: Title
+    ui->metadataTable->setItem(0, 1, new QTableWidgetItem(mb_title));
+    ui->metadataTable->setItem(0, 3, new QTableWidgetItem(obj["genius_title"].toString()));
+
+    // Row 1: Artist
+    ui->metadataTable->setItem(1, 1, new QTableWidgetItem(obj["mb_artist_credit"].toString()));
+    ui->metadataTable->setItem(1, 3, new QTableWidgetItem(arrayToString("featured_artists")));
+
+    // Row 2: Album
+    ui->metadataTable->setItem(2, 1, new QTableWidgetItem(album));
+
+    // Row 3: Release Date
+    ui->metadataTable->setItem(3, 1, new QTableWidgetItem(release_date));
+    ui->metadataTable->setItem(3, 3, new QTableWidgetItem(obj["genius_release_date"].toString()));
+
+    // Row 4: Genre
+    ui->metadataTable->setItem(4, 1, new QTableWidgetItem(arrayToString("mb_genres")));
+    ui->metadataTable->setItem(4, 2, new QTableWidgetItem(arrayToString("lastfm_tags")));
+
+    // Row 5: Release Country
+    ui->metadataTable->setItem(5, 1, new QTableWidgetItem(obj["release_country"].toString()));
+
+    // Row 6: Release Status
+    ui->metadataTable->setItem(6, 1, new QTableWidgetItem(obj["release_status"].toString()));
+
+    // Row 7: MusicBrainz Track ID
+    ui->metadataTable->setItem(7, 1, new QTableWidgetItem(obj["recording_id"].toString()));
+
+    // Row 8: MusicBrainz Album ID
+    ui->metadataTable->setItem(8, 1, new QTableWidgetItem(obj["release_id"].toString()));
+
+    // Row 9: Barcode
+    ui->metadataTable->setItem(9, 1, new QTableWidgetItem(obj["release_barcode"].toString()));
+
+    // Row 10: ISRC
+    ui->metadataTable->setItem(10, 1, new QTableWidgetItem(arrayToString("mb_isrcs")));
+
+    // Row 11: Similar Artists
+    ui->metadataTable->setItem(11, 2, new QTableWidgetItem(arrayToString("similar_artists")));
+
+    // Row 12: Founding Date (Career Begin)
+    ui->metadataTable->setItem(12, 1, new QTableWidgetItem(obj["career_begin"].toString()));
 
     QPixmap pixmap = loadPixmapFromUrl(obj["cover_art_url"].toString());
     ui->coverArt->setPixmap(

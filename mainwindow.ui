@@ -220,27 +220,11 @@
        <height>25</height>
       </rect>
      </property>
-     <property name="text">
-      <string>Keep Selected Properties</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_5">
-     <property name="geometry">
-      <rect>
-       <x>780</x>
-       <y>350</y>
-       <width>171</width>
-       <height>191</height>
-      </rect>
+     <property name="toolTip">
+      <string>Moves tags from the source columns over to the &quot;tag&quot; column</string>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;After grabbing data, select cells in the non-&amp;quot;tag&amp;quot; columns and press this button to apply them to the &amp;quot;tag&amp;quot; column. Data in this column will be applied to the file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignmentFlag::AlignBottom|Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft</set>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
+      <string>Apply Tags From Sources</string>
      </property>
     </widget>
    </widget>

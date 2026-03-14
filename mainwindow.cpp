@@ -453,3 +453,20 @@ void MainWindow::onPythonProcessFinished(int exitCode, QProcess::ExitStatus exit
 
     ui->scriptLog->appendPlainText(QStringLiteral("%1 by %2 | score: %3").arg(title, artist).arg(score));
 }
+
+void MainWindow::on_keepButton_clicked()
+{
+    int rowCount = ui->metadataTable->rowCount();
+    int colCount = ui->metadataTable->columnCount();
+
+    for (int row = 0; row < rowCount; ++row) {
+        for (int col = 1; col < colCount; ++col) {
+            QTableWidgetItem *item = ui->metadataTable->item(row, col);
+            if (item && !item->text().isEmpty()) {
+                ui->metadataTable->setItem(row, 0, new QTableWidgetItem(item->text()));
+                break;
+            }
+        }
+    }
+}
+

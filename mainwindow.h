@@ -32,6 +32,7 @@ private slots:
     void on_artBrowseButton_clicked();
     void on_grabButton_clicked();
     void onPythonProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
+    void on_keepButton_clicked();
 
 private:
     Ui::MainWindow *ui;

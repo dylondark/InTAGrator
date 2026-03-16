@@ -16,6 +16,10 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <taglib/mpegfile.h>
+#include <taglib/id3v2tag.h>
+#include <taglib/textidentificationframe.h>
+#include <QString>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -181,59 +185,113 @@ void MainWindow::on_tagButton_clicked()
     TagLib::Tag* tag = f.tag();
     bool modified = false;
 
-    QString newTitle  = ui->metadataTable->item(0, 0)->text();
-    QString newArtist = ui->metadataTable->item(1, 0)->text();
-    QString newAlbum  = ui->metadataTable->item(2, 0)->text();
-    QString newGenre  = ui->metadataTable->item(3, 0)->text();
-    QString newTrack  = ui->metadataTable->item(4, 0)->text();
-    QString newYear   = ui->metadataTable->item(5, 0)->text();
+    // Helper to get the first non-empty cell in a row across all columns
+    auto getRowValue = [this](int row) -> QString {
+        for (int col = 0; col < ui->metadataTable->columnCount(); ++col) {
+            QTableWidgetItem *item = ui->metadataTable->item(row, col);
+            if (item && !item->text().isEmpty()) {
+                return item->text();
+            }
+        }
+        return QString();
+    };
 
-    QPixmap newCoverArt = ui->coverArt->pixmap();
-
+    // Standard tags (writable to all formats)
+    // Row 0: Title
+    QString newTitle = getRowValue(0);
     if (!newTitle.isEmpty()) {
-        tag->setTitle(TagLib::String(newTitle.toUtf8().constData(),
-                                     TagLib::String::UTF8));
+        tag->setTitle(TagLib::String(newTitle.toUtf8().constData(), TagLib::String::UTF8));
         modified = true;
     }
 
+    // Row 1: Artist
+    QString newArtist = getRowValue(1);
     if (!newArtist.isEmpty()) {
-        tag->setArtist(TagLib::String(newArtist.toUtf8().constData(),
-                                      TagLib::String::UTF8));
+        tag->setArtist(TagLib::String(newArtist.toUtf8().constData(), TagLib::String::UTF8));
         modified = true;
     }
 
+    // Row 2: Album
+    QString newAlbum = getRowValue(2);
     if (!newAlbum.isEmpty()) {
-        tag->setAlbum(TagLib::String(newAlbum.toUtf8().constData(),
-                                     TagLib::String::UTF8));
+        tag->setAlbum(TagLib::String(newAlbum.toUtf8().constData(), TagLib::String::UTF8));
         modified = true;
     }
 
+    // Row 4: Genre
+    QString newGenre = getRowValue(4);
     if (!newGenre.isEmpty()) {
-        tag->setGenre(TagLib::String(newGenre.toUtf8().constData(),
-                                     TagLib::String::UTF8));
+        tag->setGenre(TagLib::String(newGenre.toUtf8().constData(), TagLib::String::UTF8));
         modified = true;
     }
 
-    if (!newYear.isEmpty()) {
+    // Row 3: Release Date (extract year if possible)
+    QString releaseDate = getRowValue(3);
+    if (!releaseDate.isEmpty()) {
         bool ok;
-        int year = newYear.toInt(&ok);
-        if (ok) {
+        int year = releaseDate.left(4).toInt(&ok);
+        if (ok && year > 0) {
             tag->setYear(year);
             modified = true;
         }
     }
 
-    if (!newTrack.isEmpty()) {
-        bool ok;
-        int track = newTrack.toInt(&ok);
-        if (ok) {
-            tag->setTrack(track);
-            modified = true;
-        }
-    }
+    // For MP3 files, write extended ID3v2 tags
+    TagLib::MPEG::File *mpegFile = dynamic_cast<TagLib::MPEG::File *>(f.file());
+    if (mpegFile && mpegFile->ID3v2Tag()) {
+        TagLib::ID3v2::Tag *id3v2 = mpegFile->ID3v2Tag();
 
-    if (!newCoverArt.isNull()) {
+        // Helper to add/update a TXXX (user-defined text) frame
+        auto setUserTextFrame = [id3v2](const QString &description, const QString &value) {
+            if (value.isEmpty())
+                return;
 
+            TagLib::String desc(description.toUtf8().constData(), TagLib::String::UTF8);
+            TagLib::String val(value.toUtf8().constData(), TagLib::String::UTF8);
+
+            // Remove existing frames with the same description
+            auto frames = id3v2->frameList("TXXX");
+            for (auto frame : frames) {
+                auto *userFrame = dynamic_cast<TagLib::ID3v2::UserTextIdentificationFrame *>(frame);
+                if (userFrame && userFrame->description() == desc) {
+                    id3v2->removeFrame(frame);
+                    break;
+                }
+            }
+
+            // Create and add new frame
+            TagLib::ID3v2::UserTextIdentificationFrame *frame =
+                new TagLib::ID3v2::UserTextIdentificationFrame(TagLib::String::UTF8);
+            frame->setDescription(desc);
+            frame->setText(val);
+            id3v2->addFrame(frame);
+        };
+
+        // Row 5: Release Country
+        setUserTextFrame("RELEASE_COUNTRY", getRowValue(5));
+
+        // Row 6: Release Status
+        setUserTextFrame("RELEASE_STATUS", getRowValue(6));
+
+        // Row 7: MusicBrainz Track ID
+        setUserTextFrame("MUSICBRAINZ_TRACKID", getRowValue(7));
+
+        // Row 8: MusicBrainz Album ID
+        setUserTextFrame("MUSICBRAINZ_ALBUMID", getRowValue(8));
+
+        // Row 9: Barcode
+        setUserTextFrame("BARCODE", getRowValue(9));
+
+        // Row 10: ISRC
+        setUserTextFrame("ISRC", getRowValue(10));
+
+        // Row 11: Similar Artists
+        setUserTextFrame("SIMILAR_ARTISTS", getRowValue(11));
+
+        // Row 12: Founding Date
+        setUserTextFrame("FOUNDING_DATE", getRowValue(12));
+
+        modified = true;
     }
 
     if (modified) {

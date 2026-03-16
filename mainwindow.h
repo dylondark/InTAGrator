@@ -39,5 +39,6 @@ private:
     Ui::MainWindow *ui;
     QProcess m_pythonProcess;
     QString m_lastGrabInputFile;
+    QPixmap m_defaultCover;
 };
 #endif // MAINWINDOW_H

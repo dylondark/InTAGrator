@@ -16,9 +16,12 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QBuffer>
 #include <taglib/mpegfile.h>
 #include <taglib/id3v2tag.h>
 #include <taglib/textidentificationframe.h>
+#include <taglib/attachedpictureframe.h>
+//#include <taglib/bytevector.h>
 #include <QString>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -28,8 +31,12 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setAcceptDrops(true);
 
+    m_defaultCover = QPixmap(":/resources/defaultalbum.png");
+
     ui->metadataTable->setHorizontalHeaderLabels({"Tag", "Musicbrainz", "Last.fm", "Genius"});
     ui->metadataTable->setVerticalHeaderLabels({"Title", "Artist", "Album", "Release Date", "Genre", "Release Country", "Release Status", "MusicBrainz Track ID", "MusicBrainz Album ID", "Barcode", "ISRC", "Similar Artists", "Founding Date"});
+
+    ui->coverArt->setPixmap(m_defaultCover);
 
     connect(&m_pythonProcess, &QProcess::readyReadStandardOutput, this, [this]() {
         ui->scriptLog->appendPlainText(QString::fromLocal8Bit(m_pythonProcess.readAllStandardOutput()));
@@ -96,7 +103,7 @@ void MainWindow::on_loadFileButton_clicked()
 
     ui->metadataTable->clearContents();
     ui->coverArt->clear();
-    ui->coverArt->setPixmap(QPixmap(":/resources/defaultalbum.png"));
+    ui->coverArt->setPixmap(m_defaultCover);
 
     TagLib::FileRef f(fileName.toUtf8().constData());
 
@@ -291,7 +298,26 @@ void MainWindow::on_tagButton_clicked()
         // Row 12: Founding Date
         setUserTextFrame("FOUNDING_DATE", getRowValue(12));
 
-        modified = true;
+        // Cover art: only write if the displayed image is not the default placeholder.
+        QPixmap currentCover = ui->coverArt->pixmap();
+        if (!currentCover.isNull() && currentCover.toImage() != m_defaultCover.toImage()) {
+            QByteArray ba;
+            QBuffer buffer(&ba);
+            buffer.open(QIODevice::WriteOnly);
+            currentCover.toImage().save(&buffer, "PNG");
+
+            TagLib::ByteVector data(ba.constData(), ba.size());
+
+            // Remove existing APIC frames
+            id3v2->removeFrames("APIC");
+
+            auto *apic = new TagLib::ID3v2::AttachedPictureFrame();
+            apic->setMimeType("image/png");
+            apic->setPicture(data);
+            id3v2->addFrame(apic);
+
+            modified = true;
+        }
     }
 
     if (modified) {

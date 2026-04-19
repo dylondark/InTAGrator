@@ -23,6 +23,8 @@
 #include <taglib/attachedpictureframe.h>
 //#include <taglib/bytevector.h>
 #include <QString>
+#include <set>
+#include <algorithm>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -596,5 +598,51 @@ void MainWindow::on_clearButton_clicked()
     ui->coverArt->clear();
     ui->coverArt->setPixmap(QPixmap(":/resources/defaultalbum.png"));
     stylizeFirstColumn();
+}
+
+
+void MainWindow::on_keepSelectedButton_clicked()
+{
+    // copy first selected cell in each row to first column if that row has a selected cell
+    // ignore anything selected in first column
+    auto selectedItems = ui->metadataTable->selectedItems();
+    
+    // Remove any items from the first column
+    selectedItems.erase(std::remove_if(selectedItems.begin(), selectedItems.end(),
+                                       [](QTableWidgetItem *item) {
+                                           return item->column() == 0;
+                                       }),
+                        selectedItems.end());
+    
+    // Track which rows have been processed
+    std::set<int> processedRows;
+    
+    // For each selected item, copy to first column if not already processed
+    for (QTableWidgetItem *item : selectedItems) {
+        int row = item->row();
+        if (processedRows.find(row) == processedRows.end() && !item->text().isEmpty()) {
+            ui->metadataTable->setItem(row, 0, new QTableWidgetItem(item->text()));
+            processedRows.insert(row);
+        }
+    }
+    
+    stylizeFirstColumn();
+}
+
+
+void MainWindow::on_metadataTable_itemSelectionChanged()
+{
+    auto selectedItems = ui->metadataTable->selectedItems();
+    // clear any items from the first column from selecteditems
+    selectedItems.erase(std::remove_if(selectedItems.begin(), selectedItems.end(),
+                                       [](QTableWidgetItem *item) {
+                                           return item->column() == 0;
+                                       }),
+                        selectedItems.end());
+
+    if (selectedItems.isEmpty())
+        ui->keepSelectedButton->setEnabled(false);
+    else
+        ui->keepSelectedButton->setEnabled(true);
 }
 

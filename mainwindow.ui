@@ -225,20 +225,36 @@
       <string>Moves tags from the source columns over to the &quot;tag&quot; column</string>
      </property>
      <property name="text">
-      <string>Apply Tags From Sources</string>
+      <string>Apply Tags From First</string>
      </property>
     </widget>
     <widget class="QPushButton" name="clearButton">
      <property name="geometry">
       <rect>
        <x>780</x>
-       <y>520</y>
+       <y>490</y>
        <width>80</width>
        <height>24</height>
       </rect>
      </property>
      <property name="text">
       <string>Clear Table</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="keepSelectedButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>780</x>
+       <y>520</y>
+       <width>171</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Apply Tags From Selected</string>
      </property>
     </widget>
    </widget>

@@ -34,6 +34,8 @@ private slots:
     void onPythonProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void on_keepButton_clicked();
     void on_clearButton_clicked();
+    void on_keepSelectedButton_clicked();
+    void on_metadataTable_itemSelectionChanged();
 
 private:
     Ui::MainWindow *ui;

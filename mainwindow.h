@@ -40,5 +40,7 @@ private:
     QProcess m_pythonProcess;
     QString m_lastGrabInputFile;
     QPixmap m_defaultCover;
+    
+    void stylizeFirstColumn();
 };
 #endif // MAINWINDOW_H

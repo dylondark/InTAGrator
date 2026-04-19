@@ -38,6 +38,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->coverArt->setPixmap(m_defaultCover);
 
+    stylizeFirstColumn();
+
     connect(&m_pythonProcess, &QProcess::readyReadStandardOutput, this, [this]() {
         ui->scriptLog->appendPlainText(QString::fromLocal8Bit(m_pythonProcess.readAllStandardOutput()));
     });
@@ -94,6 +96,18 @@ void MainWindow::on_fileInBrowseButton_clicked()
     ui->fileOutPathBox->setText(fileName);
 }
 
+void MainWindow::stylizeFirstColumn()
+{
+    for (int row = 0; row < ui->metadataTable->rowCount(); ++row) {
+        QTableWidgetItem *item = ui->metadataTable->item(row, 0);
+        if (!item) {
+            item = new QTableWidgetItem();
+            ui->metadataTable->setItem(row, 0, item);
+        }
+        item->setBackground(QColor(144, 238, 144)); // Light green
+    }
+}
+
 void MainWindow::on_loadFileButton_clicked()
 {
     QString fileName = ui->fileInPathBox->text();
@@ -138,6 +152,8 @@ void MainWindow::on_loadFileButton_clicked()
         ui->metadataTable->setItem(3, 0, new QTableWidgetItem(genre));
         ui->metadataTable->setItem(4, 0, new QTableWidgetItem(QString::number(track)));
         ui->metadataTable->setItem(5, 0, new QTableWidgetItem(QString::number(year)));
+        
+        stylizeFirstColumn();
     }
 
     if (f.audioProperties()) {
@@ -376,6 +392,7 @@ void MainWindow::on_grabButton_clicked()
     ui->metadataTable->clearContents();
     ui->coverArt->clear();
     ui->coverArt->setPixmap(QPixmap(":/resources/defaultalbum.png"));
+    stylizeFirstColumn();
 
     m_lastGrabInputFile = inputFile;
     ui->scriptLog->clear();
@@ -544,6 +561,8 @@ void MainWindow::onPythonProcessFinished(int exitCode, QProcess::ExitStatus exit
         QFile::remove(jsonPath);
 
     ui->scriptLog->appendPlainText(QStringLiteral("%1 by %2 | score: %3").arg(title, artist).arg(score));
+    
+    stylizeFirstColumn();
 }
 
 void MainWindow::on_keepButton_clicked()
@@ -560,6 +579,8 @@ void MainWindow::on_keepButton_clicked()
             }
         }
     }
+    
+    stylizeFirstColumn();
 }
 
 
@@ -568,5 +589,6 @@ void MainWindow::on_clearButton_clicked()
     ui->metadataTable->clearContents();
     ui->coverArt->clear();
     ui->coverArt->setPixmap(QPixmap(":/resources/defaultalbum.png"));
+    stylizeFirstColumn();
 }
 

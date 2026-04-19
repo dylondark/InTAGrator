@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_defaultCover = QPixmap(":/resources/defaultalbum.png");
 
     ui->metadataTable->setHorizontalHeaderLabels({"Tag", "Musicbrainz", "Last.fm", "Genius"});
-    ui->metadataTable->setVerticalHeaderLabels({"Title", "Artist", "Album", "Release Date", "Genre", "Release Country", "Release Status", "MusicBrainz Track ID", "MusicBrainz Album ID", "Barcode", "ISRC", "Similar Artists", "Founding Date"});
+    ui->metadataTable->setVerticalHeaderLabels({"Title", "Artist", "Album", "Release Date", "Genre", "Release Country", "Release Status", "MusicBrainz Track ID", "MusicBrainz Album ID", "Barcode", "ISRC", "Similar Artists", "Founding Date", "Lyrics"});
 
     ui->coverArt->setPixmap(m_defaultCover);
 
@@ -314,6 +314,9 @@ void MainWindow::on_tagButton_clicked()
         // Row 12: Founding Date
         setUserTextFrame("FOUNDING_DATE", getRowValue(12));
 
+        // Row 13: Lyrics
+        setUserTextFrame("LYRICS", getRowValue(13));
+
         // Cover art: only write if the displayed image is not the default placeholder.
         QPixmap currentCover = ui->coverArt->pixmap();
         if (!currentCover.isNull() && currentCover.toImage() != m_defaultCover.toImage()) {
@@ -546,6 +549,9 @@ void MainWindow::onPythonProcessFinished(int exitCode, QProcess::ExitStatus exit
 
     // Row 12: Founding Date (Career Begin)
     ui->metadataTable->setItem(12, 1, new QTableWidgetItem(obj["career_begin"].toString()));
+
+    // Row 13: Lyrics
+    ui->metadataTable->setItem(13, 3, new QTableWidgetItem(obj["lyrics"].toString()));
 
     QPixmap pixmap = loadPixmapFromUrl(obj["cover_art_url"].toString());
     ui->coverArt->setPixmap(
